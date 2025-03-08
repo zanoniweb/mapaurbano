@@ -51,41 +51,55 @@ function draw(e) {
     ctx.strokeStyle = colorPicker.value;
     ctx.lineWidth = brushSize.value;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let img = new Image();
-    img.src = history[history.length - 1];
-    img.onload = () => ctx.drawImage(img, 0, 0);
-
     if (tool === "pencil" || tool === "brush") {
         ctx.lineTo(x, y);
         ctx.stroke();
-    } else if (tool === "line") {
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-    } else if (tool === "rectangle") {
-        ctx.strokeRect(startX, startY, x - startX, y - startY);
-    } else if (tool === "circle") {
-        ctx.beginPath();
-        let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-        ctx.stroke();
-    } else if (tool === "point") {
-        ctx.beginPath();
-        ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
-        ctx.fill();
-    } else if (tool === "pentagon") {
-        drawPentagon(ctx, startX, startY, 50, x, y);
-    } else if (tool === "hexagon") {
-        drawHexagon(ctx, startX, startY, 50, x, y);
-    } else if (tool === "ellipse") {
-        drawEllipse(ctx, startX, startY, 60, 40, x, y);
-    } else if (tool === "star") {
-        drawStar(ctx, startX, startY, 50, x, y);
+    } else {
+        // Para formas geométricas, restauramos o estado anterior para evitar "riscos"
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let img = new Image();
+        img.src = history[history.length - 1];
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0);
+
+            if (tool === "line") {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            } else if (tool === "rectangle") {
+                ctx.strokeRect(startX, startY, x - startX, y - startY);
+            } else if (tool === "circle") {
+                ctx.beginPath();
+                let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (tool === "point") {
+                ctx.beginPath();
+                ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (tool === "pentagon") {
+                drawPentagon(ctx, startX, startY, 50);
+            } else if (tool === "hexagon") {
+                drawHexagon(ctx, startX, startY, 50);
+            } else if (tool === "ellipse") {
+                drawEllipse(ctx, startX, startY, 60, 40);
+            } else if (tool === "star") {
+                drawStar(ctx, startX, startY, 50);
+            } else if (tool === "triangle") {
+                drawTriangle(ctx, startX, startY, x, y);
+            } else if (tool === "curve") {
+                drawCurve(ctx, startX, startY, x, y);
+            } else if (tool === "diamond") {
+                drawDiamond(ctx, startX, startY, x, y);
+            } else if (tool === "parallelogram") {
+                drawParallelogram(ctx, startX, startY, x, y);
+            } else if (tool === "heart") {
+                drawHeart(ctx, startX, startY, x, y);
+            }
+        };
     }
 }
-
 function stopDrawing() {
     drawing = false;
     ctx.beginPath();
@@ -170,6 +184,61 @@ function drawStar(context, x, y, size) {
     const step = Math.PI / spikes;
     const shift = (Math.PI / 180.0) * -18;
 
+
+// Funções para desenhar as formas geométricas agregadas
+
+function drawTriangle(ctx, startX, startY, x, y) {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(x, y);
+    ctx.lineTo(startX - (x - startX), y);
+    ctx.closePath();
+    ctx.stroke();
+}
+
+function drawCurve(ctx, startX, startY, x, y) {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.quadraticCurveTo((startX + x) / 2, (startY + y) / 2 - 50, x, y);
+    ctx.stroke();
+}
+
+function drawDiamond(ctx, startX, startY, x, y) {
+    const midX = (startX + x) / 2;
+    const midY = (startY + y) / 2;
+    ctx.beginPath();
+    ctx.moveTo(midX, startY);
+    ctx.lineTo(x, midY);
+    ctx.lineTo(midX, y);
+    ctx.lineTo(startX, midY);
+    ctx.closePath();
+    ctx.stroke();
+}
+
+function drawParallelogram(ctx, startX, startY, x, y) {
+    const offsetX = (x - startX) / 2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(x, startY);
+    ctx.lineTo(x - offsetX, y);
+    ctx.lineTo(startX - offsetX, y);
+    ctx.closePath();
+    ctx.stroke();
+}
+
+function drawHeart(ctx, startX, startY, x, y) {
+    const width = x - startX;
+    const height = y - startY;
+    ctx.beginPath();
+    ctx.moveTo(startX + width / 2, startY + height / 2);
+    ctx.bezierCurveTo(startX + width / 2, startY, startX, startY, startX, startY + height / 2);
+    ctx.bezierCurveTo(startX, y, startX + width / 2, y, startX + width / 2, y);
+    ctx.bezierCurveTo(startX + width, y, startX + width, startY + height / 2, startX + width / 2, startY + height / 2);
+    ctx.bezierCurveTo(startX + width, startY, startX + width / 2, startY, startX + width / 2, startY + height / 2);
+    ctx.stroke();
+}
+// Final das funções para desenhar as formas geométricas agregadas
+
     context.beginPath();
     for (let i = 0; i < 2 * spikes; i++) {
         const curStep = i * step + shift;
@@ -178,4 +247,9 @@ function drawStar(context, x, y, size) {
     }
     context.closePath();
     context.stroke();
+}
+
+// Função do comando para apagar texto.
+function eraseText() {
+    document.getElementById('notes').value = '';
 }

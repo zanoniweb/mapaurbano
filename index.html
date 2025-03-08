@@ -24,6 +24,51 @@
         #footer {
             margin-top: 10px;
         }
+
+        /* INCÍCIO DA ESTILIZAÇÃO DOS PONTOS CARDEAIS*/
+
+        .compass {
+            position: relative;
+            width: 100px;  /* Reduzido para 50% */
+            height: 100px;  /* Reduzido para 50% */
+            border: 2px solid #000;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .direction {
+            position: absolute;
+            font-weight: bold;
+            font-size: 0.5em;  /* Reduzido para 50% */
+        }
+
+        .north { top: 5px; }  /* Reduzido para 50% */
+        .northeast { top: 5px; right: 5px; }  /* Reduzido para 50% */
+        .east { right: 5px; }  /* Reduzido para 50% */
+        .southeast { bottom: 5px; right: 5px; }  /* Reduzido para 50% */
+        .south { bottom: 5px; }  /* Reduzido para 50% */
+        .southwest { bottom: 5px; left: 5px; }  /* Reduzido para 50% */
+        .west { left: 5px; }  /* Reduzido para 50% */
+        .northwest { top: 5px; left: 5px; }  /* Reduzido para 50% */
+
+        /* FINAL DA ESTILIZAÇÃO DOS PONTOS CARDEAIS*/
+
+        /* INCÍCIO DA ESTILIZAÇÃO DO BOTÃO APAGAR*/
+
+        .eraser-button {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+         /* FINAL DA ESTILIZAÇÃO DO BOTÃO APAGAR*/
+
     </style>
 </head>
 <body>
@@ -59,12 +104,36 @@
         <button onclick="savePDF()">Salvar PDF</button>
         <button onclick="printCanvas()">Imprimir</button>
     </div>
+
+
+    <div class="compass">
+        <div class="direction north">N</div>
+        <div class="direction northeast">NE</div>
+        <div class="direction east">E</div>
+        <div class="direction southeast">SE</div>
+        <div class="direction south">S</div>
+        <div class="direction southwest">SO</div>
+        <div class="direction west">O</div>
+        <div class="direction northwest">NO</div>
+    </div>
+
+
+
     <div id="container">
         <canvas id="mapCanvas" width="800" height="600"></canvas>
     </div>
+
+    
     <div id="footer">
-        <textarea id="notes" placeholder="Adicione observações aqui..." rows="3" cols="80"></textarea>
+
+        <textarea id="notes" placeholder="Adicione observações aqui..." rows="3" cols="80"></textarea><br>
+    
+        <button class="eraser-button" onclick="eraseText()">Limpar Texto</button>
+
     </div>
+    
+
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="editor.js"></script>
     <center>
