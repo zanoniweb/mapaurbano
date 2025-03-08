@@ -75,6 +75,14 @@ function draw(e) {
         ctx.beginPath();
         ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
         ctx.fill();
+    } else if (tool === "pentagon") {
+        drawPentagon(ctx, startX, startY, 50, x, y);
+    } else if (tool === "hexagon") {
+        drawHexagon(ctx, startX, startY, 50, x, y);
+    } else if (tool === "ellipse") {
+        drawEllipse(ctx, startX, startY, 60, 40, x, y);
+    } else if (tool === "star") {
+        drawStar(ctx, startX, startY, 50, x, y);
     }
 }
 
@@ -120,3 +128,54 @@ canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mouseup", stopDrawing);
 canvas.addEventListener("mouseout", stopDrawing);
 canvas.addEventListener("click", addText);
+
+function drawPentagon(context, x, y, size) {
+    const sides = 5;
+    const step = 2 * Math.PI / sides;
+    const shift = (Math.PI / 180.0) * -18;
+
+    context.beginPath();
+    for (let i = 0; i <= sides; i++) {
+        const curStep = i * step + shift;
+        context.lineTo(x + size * Math.cos(curStep), y + size * Math.sin(curStep));
+    }
+    context.closePath();
+    context.stroke();
+}
+
+function drawHexagon(context, x, y, size) {
+    const sides = 6;
+    const step = 2 * Math.PI / sides;
+    const shift = (Math.PI / 180.0) * -30;
+
+    context.beginPath();
+    for (let i = 0; i <= sides; i++) {
+        const curStep = i * step + shift;
+        context.lineTo(x + size * Math.cos(curStep), y + size * Math.sin(curStep));
+    }
+    context.closePath();
+    context.stroke();
+}
+
+function drawEllipse(context, x, y, radiusX, radiusY) {
+    context.beginPath();
+    context.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
+    context.stroke();
+}
+
+function drawStar(context, x, y, size) {
+    const spikes = 5;
+    const outerRadius = size;
+    const innerRadius = size / 2;
+    const step = Math.PI / spikes;
+    const shift = (Math.PI / 180.0) * -18;
+
+    context.beginPath();
+    for (let i = 0; i < 2 * spikes; i++) {
+        const curStep = i * step + shift;
+        const radius = (i % 2 === 0) ? outerRadius : innerRadius;
+        context.lineTo(x + radius * Math.cos(curStep), y + radius * Math.sin(curStep));
+    }
+    context.closePath();
+    context.stroke();
+}
