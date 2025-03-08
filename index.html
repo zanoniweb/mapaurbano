@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Mapas Urbanos</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            position: relative;
+            display: inline-block;
+        }
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+            background-color: white;
+        }
+        #toolbar {
+            margin: 10px;
+        }
+        #footer {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Editor de Mapas Urbanos Temáticos</h2>
+    <div id="toolbar">
+        <input type="color" id="colorPicker" value="#ff0000">
+        <input type="range" id="brushSize" min="1" max="10" value="3">
+        <select id="toolSelector">
+            <option value="pencil">Lápis</option>
+            <option value="line">Linha</option>
+            <option value="circle">Círculo</option>
+            <option value="rectangle">Retângulo</option>
+            <option value="triangle">Triângulo</option>
+            <option value="curve">Curva</option>
+            <option value="point">Ponto</option>
+            <option value="move">Mover</option>
+            <option value="rotate">Girar</option>
+            <option value="text">Texto</option>
+            <option value="brush">Pincel</option>
+            <option value="eraser">Borracha</option>
+        </select>
+        <button onclick="undo()">Desfazer</button>
+        <button onclick="redo()">Refazer</button>
+        <button onclick="clearCanvas()">Limpar</button>
+        <button onclick="saveImage()">Salvar</button>
+        <button onclick="savePDF()">Salvar PDF</button>
+        <button onclick="printCanvas()">Imprimir</button>
+    </div>
+    <div id="container">
+        <canvas id="mapCanvas" width="800" height="600"></canvas>
+    </div>
+    <div id="footer">
+        <textarea id="notes" placeholder="Adicione observações aqui..." rows="3" cols="80"></textarea>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="editor.js"></script>
+
+
+    <center>
+        <footer>
+            Web Programa de Cartografia Desenvolvido por Juliano Zanoni.
+        </footer>
+    </center>
+</body>
+</html>

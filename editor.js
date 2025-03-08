@@ -1,0 +1,122 @@
+const canvas = document.getElementById("mapCanvas");
+const ctx = canvas.getContext("2d");
+let drawing = false;
+let startX, startY;
+let history = [], redoStack = [];
+const toolSelector = document.getElementById("toolSelector");
+const colorPicker = document.getElementById("colorPicker");
+const brushSize = document.getElementById("brushSize");
+let textInput = null;
+
+function saveState() {
+    history.push(canvas.toDataURL());
+    redoStack = [];
+}
+
+function undo() {
+    if (history.length > 0) {
+        redoStack.push(canvas.toDataURL());
+        let img = new Image();
+        img.src = history.pop();
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+    }
+}
+
+function redo() {
+    if (redoStack.length > 0) {
+        let img = new Image();
+        img.src = redoStack.pop();
+        img.onload = () => ctx.drawImage(img, 0, 0);
+    }
+}
+
+function startDrawing(e) {
+    drawing = true;
+    startX = e.offsetX;
+    startY = e.offsetY;
+    saveState();
+    if (toolSelector.value === "pencil" || toolSelector.value === "brush") {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+    }
+}
+
+function draw(e) {
+    if (!drawing) return;
+    const tool = toolSelector.value;
+    const x = e.offsetX, y = e.offsetY;
+    ctx.strokeStyle = colorPicker.value;
+    ctx.lineWidth = brushSize.value;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let img = new Image();
+    img.src = history[history.length - 1];
+    img.onload = () => ctx.drawImage(img, 0, 0);
+
+    if (tool === "pencil" || tool === "brush") {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    } else if (tool === "line") {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    } else if (tool === "rectangle") {
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+    } else if (tool === "circle") {
+        ctx.beginPath();
+        let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (tool === "point") {
+        ctx.beginPath();
+        ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function stopDrawing() {
+    drawing = false;
+    ctx.beginPath();
+}
+
+function addText(e) {
+    if (toolSelector.value === "text") {
+        let text = prompt("Digite o texto:");
+        if (text) {
+            ctx.fillStyle = colorPicker.value;
+            ctx.font = `${brushSize.value * 5}px Arial`;
+            ctx.fillText(text, e.offsetX, e.offsetY);
+            saveState();
+        }
+    }
+}
+
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    history = [];
+    redoStack = [];
+}
+
+function savePDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, 180, 120);
+    pdf.save("mapa_urbano.pdf");
+}
+
+function printCanvas() {
+    let w = window.open();
+    w.document.write('<img src="' + canvas.toDataURL() + '"/>');
+    w.print();
+    w.close();
+}
+
+canvas.addEventListener("mousedown", startDrawing);
+canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mouseup", stopDrawing);
+canvas.addEventListener("mouseout", stopDrawing);
+canvas.addEventListener("click", addText);
