@@ -100,12 +100,30 @@
 
          /* FINAL DA ESTILIZAÇÃO DO BOTÃO APAGAR*/
 
+
     </style>
 </head>
 <body>
     <h2>Editor de Mapas Urbanos Temáticos</h2>
     <div id="toolbar">
         <input type="color" id="colorPicker" value="#ff0000">
+
+<!--Início do código de edificações de estrutura-->
+
+            <select id="edificacaoSelector">
+                <option value="" disabled selected>Selecione uma edificação</option>
+                <option value="postoSaude">Posto de Saúde</option>
+                <option value="hospital">Hospital</option>
+                <option value="rodoviaria">Rodoviária</option>
+                <option value="edificacaoPublica">Edificação Pública</option>
+                <option value="escolaPublica">Escola Pública</option>
+                <option value="escolaPrivada">Escola Privada</option>
+                <option value="cemiterio">Cemitério</option>
+            </select>
+    
+<!--Final do código de edificações de estrutura-->
+
+
         <input type="range" id="brushSize" min="1" max="10" value="3">
         <select id="toolSelector">
             <option value="pencil">Lápis</option>
@@ -117,7 +135,6 @@
             <option value="point">Ponto</option>
             <option value="move">Mover</option>
             <option value="rotate">Girar</option>
-            <option value="text">Texto</option>
             <option value="brush">Pincel</option>
             <option value="eraser">Borracha</option>
             <option value="pentagon">Pentágono</option>
@@ -127,13 +144,16 @@
             <option value="diamond">Diamante</option>
             <option value="parallelogram">Paralelogramo</option>
             <option value="heart">Coração</option>
+            <option value="text">Texto</option>
         </select>
+
         <button onclick="undo()">Desfazer</button>
         <button onclick="redo()">Refazer</button>
         <button onclick="clearCanvas()">Limpar</button>
         <button onclick="saveImage()">Salvar</button>
         <button onclick="savePDF()">Salvar PDF</button>
         <button onclick="printCanvas()">Imprimir</button>
+
     </div>
 
 
@@ -149,19 +169,20 @@
     </div>
 
 
-
     <div id="container">
+
         <canvas id="mapCanvas" width="800" height="600"></canvas>
+
     </div>
 
-    
     <div id="footer">
 
         <textarea id="notes" placeholder="Adicione observações aqui..." rows="3" cols="80"></textarea><br>
-    
+        
         <button class="eraser-button" onclick="eraseText()">Limpar Texto</button>
-
+    
     </div>
+     
     
 
 

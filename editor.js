@@ -6,6 +6,7 @@ let history = [], redoStack = [];
 const toolSelector = document.getElementById("toolSelector");
 const colorPicker = document.getElementById("colorPicker");
 const brushSize = document.getElementById("brushSize");
+
 let textInput = null;
 
 function saveState() {
@@ -105,6 +106,8 @@ function stopDrawing() {
     ctx.beginPath();
 }
 
+//O código abaixo adiciona a estrutura de texto na área de desenho
+
 function addText(e) {
     if (toolSelector.value === "text") {
         let text = prompt("Digite o texto:");
@@ -115,7 +118,9 @@ function addText(e) {
             saveState();
         }
     }
-}
+} 
+
+// Final do código abaixo adiciona a estrutura de texto na área de desenho
 
 function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -249,7 +254,101 @@ function drawHeart(ctx, startX, startY, x, y) {
     context.stroke();
 }
 
-// Função do comando para apagar texto.
+// Início do código para edificações de estrutura
+
+window.onload = function() {
+    const selector = document.getElementById('edificacaoSelector');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    selector.addEventListener('change', function() {
+        const selectedValue = selector.value;
+        switch (selectedValue) {
+            case 'postoSaude':
+                desenharPostoSaude(ctx);
+                break;
+            case 'hospital':
+                desenharHospital(ctx);
+                break;
+            case 'rodoviaria':
+                desenharRodoviaria(ctx);
+                break;
+            case 'edificacaoPublica':
+                desenharEdificacaoPublica(ctx);
+                break;
+            case 'escolaPublica':
+                desenharEscolaPublica(ctx);
+                break;
+            case 'escolaPrivada':
+                desenharEscolaPrivada(ctx);
+                break;
+            case 'cemiterio':
+                desenharCemiterio(ctx);
+                break;
+        }
+    });
+};
+
+function desenharPostoSaude(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'green';
+    ctx.fillRect(50, 50, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Posto de Saúde', 60, 100);
+}
+
+function desenharHospital(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'red';
+    ctx.fillRect(200, 50, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Hospital', 220, 100);
+}
+
+function desenharRodoviaria(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(350, 50, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Rodoviária', 370, 100);
+}
+
+function desenharEdificacaoPublica(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'purple';
+    ctx.fillRect(50, 200, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Edificação Pública', 60, 250);
+}
+
+function desenharEscolaPublica(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'orange';
+    ctx.fillRect(200, 200, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Escola Pública', 220, 250);
+}
+
+function desenharEscolaPrivada(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'pink';
+    ctx.fillRect(350, 200, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Escola Privada', 370, 250);
+}
+
+function desenharCemiterio(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = 'grey';
+    ctx.fillRect(50, 350, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.fillText('Cemitério', 70, 400);
+}
+
+// Final do código para edificações de estrutura
+
+
+// Função do comando para apagar texto da textare.
 function eraseText() {
     document.getElementById('notes').value = '';
 }
