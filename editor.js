@@ -1,354 +1,297 @@
 const canvas = document.getElementById("mapCanvas");
 const ctx = canvas.getContext("2d");
-let drawing = false;
-let startX, startY;
-let history = [], redoStack = [];
 const toolSelector = document.getElementById("toolSelector");
 const colorPicker = document.getElementById("colorPicker");
 const brushSize = document.getElementById("brushSize");
+const edificacaoSelector = document.getElementById("edificacaoSelector");
+const textSize = document.getElementById("textSize");
 
-let textInput = null;
+let drawing = false;
+let startX, startY;
+let objects = [];
+let history = [];
+let redoStack = [];
 
+let currentTool = "pencil";
+let currentObject = null;
+
+// Adiciona os event listeners
+toolSelector.addEventListener("change", (e) => {
+    currentTool = e.target.value;
+    canvas.style.cursor = currentTool === "text" ? "text" : "crosshair";
+    if (currentTool === "eraser") {
+        colorPicker.disabled = true;
+    } else {
+        colorPicker.disabled = false;
+    }
+});
+
+edificacaoSelector.addEventListener("change", (e) => {
+    currentTool = "edificacao";
+    toolSelector.value = "edificacao";
+    canvas.style.cursor = "crosshair";
+});
+
+// Funções de salvamento e restauração de estado
 function saveState() {
-    history.push(canvas.toDataURL());
     redoStack = [];
+    history.push(JSON.parse(JSON.stringify(objects)));
+    if (history.length > 20) history.shift();
 }
 
-function undo() {
-    if (history.length > 0) {
-        redoStack.push(canvas.toDataURL());
-        let img = new Image();
-        img.src = history.pop();
-        img.onload = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+function restoreState(state) {
+    objects = JSON.parse(JSON.stringify(state));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    objects.forEach(obj => {
+        drawObject(obj);
+    });
+}
+
+// Eventos do mouse
+canvas.addEventListener("mousedown", (e) => {
+    drawing = true;
+    startX = e.offsetX;
+    startY = e.offsetY;
+
+    if (currentTool === "text") {
+        currentObject = {
+            tool: "text",
+            color: colorPicker.value,
+            size: textSize.value,
+            points: [{ x: startX, y: startY }],
+            text: null,
+            rotation: 0
         };
+    } else if (currentTool === "edificacao") {
+        const type = edificacaoSelector.value;
+        if (type) {
+            objects.push({
+                tool: "edificacao",
+                type: type,
+                points: [{ x: startX, y: startY }],
+            });
+            saveState();
+            redrawAll();
+            edificacaoSelector.value = "";
+            currentTool = "pencil";
+        }
+    } else {
+        saveState();
+        currentObject = {
+            tool: currentTool,
+            color: currentTool === "eraser" ? "#fff" : colorPicker.value,
+            size: brushSize.value,
+            points: [{ x: startX, y: startY }]
+        };
+    }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+    if (!drawing || currentTool === "edificacao") return;
+    const x = e.offsetX, y = e.offsetY;
+
+    if (currentObject) {
+        if (currentTool === "pencil" || currentTool === "eraser") {
+            currentObject.points.push({ x: x, y: y });
+        } else {
+            currentObject.points[1] = { x: x, y: y };
+        }
+        redrawAll();
+    }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+    if (!drawing) return;
+
+    if (currentObject) {
+        if (currentTool === "text") {
+            const text = prompt("Digite o texto:");
+            if (text) {
+                currentObject.text = text;
+                const rotation = prompt("Digite o ângulo de rotação (em graus, 0 para horizontal, 90 para vertical):");
+                currentObject.rotation = rotation ? parseFloat(rotation) : 0;
+            }
+        }
+        objects.push(currentObject);
+        saveState();
+        redrawAll();
+    }
+
+    drawing = false;
+    currentObject = null;
+});
+
+canvas.addEventListener("mouseout", () => {
+    drawing = false;
+});
+
+// Função para desenhar todas as formas no canvas
+function redrawAll() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    objects.forEach(obj => {
+        drawObject(obj);
+    });
+    if (currentObject && currentTool !== "text") {
+        drawObject(currentObject);
+    }
+}
+
+function drawObject(obj) {
+    ctx.strokeStyle = obj.color;
+    ctx.lineWidth = obj.size;
+    ctx.fillStyle = obj.color;
+
+    switch (obj.tool) {
+        case "pencil":
+        case "eraser":
+            ctx.beginPath();
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.moveTo(obj.points[0].x, obj.points[0].y);
+            obj.points.forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+            break;
+        case "line":
+            drawLine(obj.points[0], obj.points[1]);
+            break;
+        case "rectangle":
+            drawRect(obj.points[0], obj.points[1]);
+            break;
+        case "circle":
+            drawCircle(obj.points[0], obj.points[1]);
+            break;
+        case "triangle":
+            drawTriangle(obj.points[0], obj.points[1]);
+            break;
+        case "text":
+            drawText(obj);
+            break;
+        case "edificacao":
+            drawEdificacao(obj.type, obj.points[0].x, obj.points[0].y);
+            break;
+    }
+}
+
+// Funções de desenho
+function drawLine(p1, p2) {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+}
+
+function drawRect(p1, p2) {
+    ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+}
+
+function drawCircle(p1, p2) {
+    const radius = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    ctx.beginPath();
+    ctx.arc(p1.x, p1.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+}
+
+function drawTriangle(p1, p2) {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineTo(p1.x - (p2.x - p1.x), p2.y);
+    ctx.closePath();
+    ctx.stroke();
+}
+
+function drawText(obj) {
+    ctx.font = `${obj.size}px Arial`;
+    ctx.fillStyle = obj.color;
+    ctx.textAlign = 'center';
+
+    ctx.save();
+    ctx.translate(obj.points[0].x, obj.points[0].y);
+    ctx.rotate(obj.rotation * Math.PI / 180);
+    ctx.fillText(obj.text, 0, 0);
+    ctx.restore();
+}
+
+// Funções de desenho de edificações
+function drawEdificacao(type, x, y) {
+    let size = 30;
+    ctx.font = `${size}px Arial`;
+    ctx.textAlign = 'center';
+
+    switch(type) {
+        case 'postoSaude': ctx.fillText('🏥', x, y); break;
+        case 'hospital': ctx.fillText('➕', x, y); break;
+        case 'escolaPublica': ctx.fillText('🎓', x, y); break;
+        case 'rodoviaria': ctx.fillText('🚌', x, y); break;
+        case 'edificacaoPublica': ctx.fillText('🏢', x, y); break;
+        case 'cemiterio': ctx.fillText('⚰️', x, y); break;
+        case 'aeroporto': ctx.fillText('✈️', x, y); break;
+        case 'igreja': ctx.fillText('⛪', x, y); break;
+        case 'parque': ctx.fillText('🌳', x, y); break;
+        case 'supermercado': ctx.fillText('🛒', x, y); break;
+        case 'restaurante': ctx.fillText('🍽️', x, y); break;
+        case 'bombeiros': ctx.fillText('🚒', x, y); break;
+        case 'policia': ctx.fillText('🚓', x, y); break;
+        case 'praca': ctx.fillText('⛲', x, y); break;
+    }
+}
+
+// Funções de controle
+function undo() {
+    if (history.length > 1) {
+        redoStack.push(history.pop());
+        restoreState(history[history.length - 1]);
+    } else if (history.length === 1) {
+        redoStack.push(history.pop());
+        clearCanvas();
     }
 }
 
 function redo() {
     if (redoStack.length > 0) {
-        let img = new Image();
-        img.src = redoStack.pop();
-        img.onload = () => ctx.drawImage(img, 0, 0);
+        const nextState = redoStack.pop();
+        history.push(nextState);
+        restoreState(nextState);
     }
 }
-
-function startDrawing(e) {
-    drawing = true;
-    startX = e.offsetX;
-    startY = e.offsetY;
-    saveState();
-    if (toolSelector.value === "pencil" || toolSelector.value === "brush") {
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-    }
-}
-
-function draw(e) {
-    if (!drawing) return;
-    const tool = toolSelector.value;
-    const x = e.offsetX, y = e.offsetY;
-    ctx.strokeStyle = colorPicker.value;
-    ctx.lineWidth = brushSize.value;
-
-    if (tool === "pencil" || tool === "brush") {
-        ctx.lineTo(x, y);
-        ctx.stroke();
-    } else {
-        // Para formas geométricas, restauramos o estado anterior para evitar "riscos"
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let img = new Image();
-        img.src = history[history.length - 1];
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0);
-
-            if (tool === "line") {
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-            } else if (tool === "rectangle") {
-                ctx.strokeRect(startX, startY, x - startX, y - startY);
-            } else if (tool === "circle") {
-                ctx.beginPath();
-                let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (tool === "point") {
-                ctx.beginPath();
-                ctx.arc(x, y, brushSize.value / 2, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (tool === "pentagon") {
-                drawPentagon(ctx, startX, startY, 50);
-            } else if (tool === "hexagon") {
-                drawHexagon(ctx, startX, startY, 50);
-            } else if (tool === "ellipse") {
-                drawEllipse(ctx, startX, startY, 60, 40);
-            } else if (tool === "star") {
-                drawStar(ctx, startX, startY, 50);
-            } else if (tool === "triangle") {
-                drawTriangle(ctx, startX, startY, x, y);
-            } else if (tool === "curve") {
-                drawCurve(ctx, startX, startY, x, y);
-            } else if (tool === "diamond") {
-                drawDiamond(ctx, startX, startY, x, y);
-            } else if (tool === "parallelogram") {
-                drawParallelogram(ctx, startX, startY, x, y);
-            } else if (tool === "heart") {
-                drawHeart(ctx, startX, startY, x, y);
-            }
-        };
-    }
-}
-function stopDrawing() {
-    drawing = false;
-    ctx.beginPath();
-}
-
-//O código abaixo adiciona a estrutura de texto na área de desenho
-
-function addText(e) {
-    if (toolSelector.value === "text") {
-        let text = prompt("Digite o texto:");
-        if (text) {
-            ctx.fillStyle = colorPicker.value;
-            ctx.font = `${brushSize.value * 5}px Arial`;
-            ctx.fillText(text, e.offsetX, e.offsetY);
-            saveState();
-        }
-    }
-} 
-
-// Final do código abaixo adiciona a estrutura de texto na área de desenho
 
 function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    objects = [];
     history = [];
     redoStack = [];
 }
 
+function saveImage() {
+    const link = document.createElement('a');
+    link.download = 'mapa_urbano.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
 function savePDF() {
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, 180, 120);
+    const pdf = new jsPDF('l', 'mm', 'a4');
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 10, 10, 277, 190);
     pdf.save("mapa_urbano.pdf");
 }
 
 function printCanvas() {
-    let w = window.open();
-    w.document.write('<img src="' + canvas.toDataURL() + '"/>');
-    w.print();
-    w.close();
+    const dataUrl = canvas.toDataURL();
+    const windowContent = `<!DOCTYPE html>
+<html>
+<head><title>Imprimir Mapa</title></head>
+<body>
+    <img src="${dataUrl}" style="max-width: 100%;">
+</body>
+</html>`;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(windowContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
 }
 
-canvas.addEventListener("mousedown", startDrawing);
-canvas.addEventListener("mousemove", draw);
-canvas.addEventListener("mouseup", stopDrawing);
-canvas.addEventListener("mouseout", stopDrawing);
-canvas.addEventListener("click", addText);
-
-function drawPentagon(context, x, y, size) {
-    const sides = 5;
-    const step = 2 * Math.PI / sides;
-    const shift = (Math.PI / 180.0) * -18;
-
-    context.beginPath();
-    for (let i = 0; i <= sides; i++) {
-        const curStep = i * step + shift;
-        context.lineTo(x + size * Math.cos(curStep), y + size * Math.sin(curStep));
-    }
-    context.closePath();
-    context.stroke();
-}
-
-function drawHexagon(context, x, y, size) {
-    const sides = 6;
-    const step = 2 * Math.PI / sides;
-    const shift = (Math.PI / 180.0) * -30;
-
-    context.beginPath();
-    for (let i = 0; i <= sides; i++) {
-        const curStep = i * step + shift;
-        context.lineTo(x + size * Math.cos(curStep), y + size * Math.sin(curStep));
-    }
-    context.closePath();
-    context.stroke();
-}
-
-function drawEllipse(context, x, y, radiusX, radiusY) {
-    context.beginPath();
-    context.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
-    context.stroke();
-}
-
-function drawStar(context, x, y, size) {
-    const spikes = 5;
-    const outerRadius = size;
-    const innerRadius = size / 2;
-    const step = Math.PI / spikes;
-    const shift = (Math.PI / 180.0) * -18;
-
-
-// Funções para desenhar as formas geométricas agregadas
-
-function drawTriangle(ctx, startX, startY, x, y) {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(x, y);
-    ctx.lineTo(startX - (x - startX), y);
-    ctx.closePath();
-    ctx.stroke();
-}
-
-function drawCurve(ctx, startX, startY, x, y) {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.quadraticCurveTo((startX + x) / 2, (startY + y) / 2 - 50, x, y);
-    ctx.stroke();
-}
-
-function drawDiamond(ctx, startX, startY, x, y) {
-    const midX = (startX + x) / 2;
-    const midY = (startY + y) / 2;
-    ctx.beginPath();
-    ctx.moveTo(midX, startY);
-    ctx.lineTo(x, midY);
-    ctx.lineTo(midX, y);
-    ctx.lineTo(startX, midY);
-    ctx.closePath();
-    ctx.stroke();
-}
-
-function drawParallelogram(ctx, startX, startY, x, y) {
-    const offsetX = (x - startX) / 2;
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(x, startY);
-    ctx.lineTo(x - offsetX, y);
-    ctx.lineTo(startX - offsetX, y);
-    ctx.closePath();
-    ctx.stroke();
-}
-
-function drawHeart(ctx, startX, startY, x, y) {
-    const width = x - startX;
-    const height = y - startY;
-    ctx.beginPath();
-    ctx.moveTo(startX + width / 2, startY + height / 2);
-    ctx.bezierCurveTo(startX + width / 2, startY, startX, startY, startX, startY + height / 2);
-    ctx.bezierCurveTo(startX, y, startX + width / 2, y, startX + width / 2, y);
-    ctx.bezierCurveTo(startX + width, y, startX + width, startY + height / 2, startX + width / 2, startY + height / 2);
-    ctx.bezierCurveTo(startX + width, startY, startX + width / 2, startY, startX + width / 2, startY + height / 2);
-    ctx.stroke();
-}
-// Final das funções para desenhar as formas geométricas agregadas
-
-    context.beginPath();
-    for (let i = 0; i < 2 * spikes; i++) {
-        const curStep = i * step + shift;
-        const radius = (i % 2 === 0) ? outerRadius : innerRadius;
-        context.lineTo(x + radius * Math.cos(curStep), y + radius * Math.sin(curStep));
-    }
-    context.closePath();
-    context.stroke();
-}
-
-// Início do código para edificações de estrutura
-
-window.onload = function() {
-    const selector = document.getElementById('edificacaoSelector');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
-    selector.addEventListener('change', function() {
-        const selectedValue = selector.value;
-        switch (selectedValue) {
-            case 'postoSaude':
-                desenharPostoSaude(ctx);
-                break;
-            case 'hospital':
-                desenharHospital(ctx);
-                break;
-            case 'rodoviaria':
-                desenharRodoviaria(ctx);
-                break;
-            case 'edificacaoPublica':
-                desenharEdificacaoPublica(ctx);
-                break;
-            case 'escolaPublica':
-                desenharEscolaPublica(ctx);
-                break;
-            case 'escolaPrivada':
-                desenharEscolaPrivada(ctx);
-                break;
-            case 'cemiterio':
-                desenharCemiterio(ctx);
-                break;
-        }
-    });
-};
-
-function desenharPostoSaude(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'green';
-    ctx.fillRect(50, 50, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Posto de Saúde', 60, 100);
-}
-
-function desenharHospital(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'red';
-    ctx.fillRect(200, 50, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Hospital', 220, 100);
-}
-
-function desenharRodoviaria(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(350, 50, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Rodoviária', 370, 100);
-}
-
-function desenharEdificacaoPublica(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'purple';
-    ctx.fillRect(50, 200, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Edificação Pública', 60, 250);
-}
-
-function desenharEscolaPublica(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'orange';
-    ctx.fillRect(200, 200, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Escola Pública', 220, 250);
-}
-
-function desenharEscolaPrivada(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'pink';
-    ctx.fillRect(350, 200, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Escola Privada', 370, 250);
-}
-
-function desenharCemiterio(ctx) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = 'grey';
-    ctx.fillRect(50, 350, 100, 100);
-    ctx.fillStyle = 'white';
-    ctx.fillText('Cemitério', 70, 400);
-}
-
-// Final do código para edificações de estrutura
-
-
-// Função do comando para apagar texto da textare.
-function eraseText() {
-    document.getElementById('notes').value = '';
-}
+// Inicializa o canvas
+clearCanvas();

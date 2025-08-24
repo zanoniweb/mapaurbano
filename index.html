@@ -4,194 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor de Mapas Urbanos</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        #container {
-            position: relative;
-            display: inline-block;
-        }
-        canvas {
-            border: 1px solid black;
-            cursor: crosshair;
-            background-color: white;
-        }
-        #toolbar {
-            margin: 10px;
-        }
-        #footer {
-            margin-top: 10px;
-        }
-
-        button {
-            margin: 5px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background-color: black;
-            color: white;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: blue;
-            color: white;
-        }    
-
-        /* INCÍCIO DA ESTILIZAÇÃO DOS PONTOS CARDEAIS*/
-
-        .compass {
-            position: relative;
-            width: 100px;  /* Reduzido para 50% */
-            height: 100px;  /* Reduzido para 50% */
-            border: 2px solid #000;
-            border-radius: 50%;
-            margin: 0 auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .direction {
-            position: absolute;
-            font-weight: bold;
-            font-size: 0.5em;  /* Reduzido para 50% */
-        }
-
-        .north { 
-            top: 5px; 
-        }  /* Reduzido para 50% */
-        .northeast { 
-            top: 5px; right: 5px; 
-        }  /* Reduzido para 50% */
-        .east { 
-            right: 5px; 
-        }  /* Reduzido para 50% */
-        .southeast { 
-            bottom: 5px; right: 5px; 
-        }  /* Reduzido para 50% */
-        .south { 
-            bottom: 5px; 
-        }  /* Reduzido para 50% */
-        .southwest { 
-            bottom: 5px; left: 5px;
-        } /* Reduzido para 50% */
-        .west { 
-            left: 5px; 
-        }  /* Reduzido para 50% */
-        .northwest { 
-            top: 5px; left: 5px; 
-        } /* Reduzido para 50% */
-
-        /* FINAL DA ESTILIZAÇÃO DOS PONTOS CARDEAIS*/
-
-        /* INCÍCIO DA ESTILIZAÇÃO DO BOTÃO APAGAR*/
-
-        .eraser-button {
-            padding: 10px 20px;
-            background-color: black;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-         /* FINAL DA ESTILIZAÇÃO DO BOTÃO APAGAR*/
-
-
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h2>Editor de Mapas Urbanos Temáticos</h2>
-    <div id="toolbar">
-        <input type="color" id="colorPicker" value="#ff0000">
+    <header class="header">
+        <h1>Editor de Mapas Urbanos</h1>
+    </header>
 
-<!--Início do código de edificações de estrutura-->
+    <main class="main-container">
+        <aside class="sidebar">
+            <div class="toolbar-section">
+                <h3>Ferramentas</h3>
+                <div class="tool-options">
+                    <input type="color" id="colorPicker" value="#0057b7" class="tool-input">
+                    <select id="toolSelector" class="tool-select">
+                        <option value="pencil">Lápis</option>
+                        <option value="eraser">Borracha</option>
+                        <option value="line">Linha</option>
+                        <option value="circle">Círculo</option>
+                        <option value="rectangle">Retângulo</option>
+                        <option value="triangle">Triângulo</option>
+                        <option value="text">Texto</option>
+                    </select>
+                    <input type="range" id="brushSize" min="1" max="20" value="3" class="tool-input">
+                    <input type="range" id="textSize" min="10" max="100" value="24" class="tool-input">
+                </div>
+            </div>
 
-            <select id="edificacaoSelector">
-                <option value="" disabled selected>Selecione uma edificação</option>
-                <option value="postoSaude">Posto de Saúde</option>
-                <option value="hospital">Hospital</option>
-                <option value="rodoviaria">Rodoviária</option>
-                <option value="edificacaoPublica">Edificação Pública</option>
-                <option value="escolaPublica">Escola Pública</option>
-                <option value="escolaPrivada">Escola Privada</option>
-                <option value="cemiterio">Cemitério</option>
-            </select>
-    
-<!--Final do código de edificações de estrutura-->
+            <div class="toolbar-section">
+                <h3>Edificações</h3>
+                <select id="edificacaoSelector" class="tool-select">
+                    <option value="" disabled selected>Selecione uma edificação</option>
+                    <option value="postoSaude">Posto de Saúde</option>
+                    <option value="hospital">Hospital</option>
+                    <option value="escolaPublica">Escola Pública</option>
+                    <option value="rodoviaria">Rodoviária</option>
+                    <option value="edificacaoPublica">Edificação Pública</option>
+                    <option value="cemiterio">Cemitério</option>
+                    <option value="aeroporto">Aeroporto</option>
+                    <option value="igreja">Igreja</option>
+                    <option value="parque">Parque</option>
+                    <option value="supermercado">Supermercado</option>
+                    <option value="restaurante">Restaurante</option>
+                    <option value="bombeiros">Corpo de Bombeiros</option>
+                    <option value="policia">Delegacia de Polícia</option>
+                    <option value="praca">Praça</option>
+                </select>
+            </div>
 
+            <div class="toolbar-section actions">
+                <h3>Ações</h3>
+                <button onclick="undo()" class="action-button">Desfazer</button>
+                <button onclick="redo()" class="action-button">Refazer</button>
+                <button onclick="clearCanvas()" class="action-button">Limpar</button>
+                <button onclick="saveImage()" class="action-button">Salvar Imagem</button>
+                <button onclick="savePDF()" class="action-button">Salvar PDF</button>
+                <button onclick="printCanvas()" class="action-button">Imprimir</button>
+            </div>
+        </aside>
 
-        <input type="range" id="brushSize" min="1" max="10" value="3">
-        <select id="toolSelector">
-            <option value="pencil">Lápis</option>
-            <option value="line">Linha</option>
-            <option value="circle">Círculo</option>
-            <option value="rectangle">Retângulo</option>
-            <option value="triangle">Triângulo</option>
-            <option value="curve">Curva</option>
-            <option value="point">Ponto</option>
-            <option value="move">Mover</option>
-            <option value="rotate">Girar</option>
-            <option value="brush">Pincel</option>
-            <option value="eraser">Borracha</option>
-            <option value="pentagon">Pentágono</option>
-            <option value="hexagon">Hexágono</option>
-            <option value="ellipse">Elipse</option>
-            <option value="star">Estrela</option>
-            <option value="diamond">Diamante</option>
-            <option value="parallelogram">Paralelogramo</option>
-            <option value="heart">Coração</option>
-            <option value="text">Texto</option>
-        </select>
+        <section class="canvas-section">
+            <div id="container" class="canvas-container">
+                <canvas id="mapCanvas" width="900" height="650"></canvas>
+                <div class="compass">
+                    <div class="direction north">N</div>
+                    <div class="direction northeast">NE</div>
+                    <div class="direction east">E</div>
+                    <div class="direction southeast">SE</div>
+                    <div class="direction south">S</div>
+                    <div class="direction southwest">SO</div>
+                    <div class="direction west">O</div>
+                    <div class="direction northwest">NO</div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-        <button onclick="undo()">Desfazer</button>
-        <button onclick="redo()">Refazer</button>
-        <button onclick="clearCanvas()">Limpar</button>
-        <button onclick="saveImage()">Salvar</button>
-        <button onclick="savePDF()">Salvar PDF</button>
-        <button onclick="printCanvas()">Imprimir</button>
-
-    </div>
-
-
-    <div class="compass">
-        <div class="direction north">N</div>
-        <div class="direction northeast">NE</div>
-        <div class="direction east">E</div>
-        <div class="direction southeast">SE</div>
-        <div class="direction south">S</div>
-        <div class="direction southwest">SO</div>
-        <div class="direction west">O</div>
-        <div class="direction northwest">NO</div>
-    </div>
-
-
-    <div id="container">
-
-        <canvas id="mapCanvas" width="800" height="600"></canvas>
-
-    </div>
-
-    <div id="footer">
-
-        <textarea id="notes" placeholder="Adicione observações aqui..." rows="3" cols="80"></textarea><br>
-        
-        <button class="eraser-button" onclick="eraseText()">Limpar Texto</button>
-    
-    </div>
-     
-    
-
+    <footer class="footer">
+        <p>Web Programa de Cartografia Desenvolvido por Juliano Zanoni.</p>
+    </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="editor.js"></script>
-    <center>
-        <footer>
-            Web Programa de Cartografia Desenvolvido por Juliano Zanoni.
-        </footer>
-    </center>
 </body>
 </html>
